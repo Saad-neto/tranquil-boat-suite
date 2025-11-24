@@ -62,6 +62,14 @@ const Header = () => {
               Passeios
             </button>
             <button
+              onClick={() => scrollToSection('reservas')}
+              className={`font-medium transition-colors ${
+                isScrolled ? 'text-foreground hover:text-primary' : 'text-white hover:text-accent'
+              }`}
+            >
+              Reservar
+            </button>
+            <button
               onClick={() => scrollToSection('como-funciona')}
               className={`font-medium transition-colors ${
                 isScrolled ? 'text-foreground hover:text-primary' : 'text-white hover:text-accent'
@@ -113,6 +121,12 @@ const Header = () => {
                 className="text-left font-medium text-foreground hover:text-primary transition-colors"
               >
                 Passeios
+              </button>
+              <button
+                onClick={() => scrollToSection('reservas')}
+                className="text-left font-medium text-foreground hover:text-primary transition-colors"
+              >
+                Reservar
               </button>
               <button
                 onClick={() => scrollToSection('como-funciona')}

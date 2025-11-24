@@ -1,8 +1,11 @@
-import { mockTides } from '@/data/mockTides';
-import { Waves, Calendar } from 'lucide-react';
+import { useNextIdealTides } from '@/hooks/useTides';
+import { Waves, Calendar, Loader2, AlertCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const TideWidget = () => {
+  const { data: idealTides, isLoading, error } = useNextIdealTides(3);
+
   const getQualityBadge = (quality: string) => {
     switch (quality) {
       case 'ideal':
@@ -28,43 +31,94 @@ const TideWidget = () => {
         </div>
       </div>
 
-      <div className="space-y-3">
-        <p className="text-sm font-semibold text-foreground mb-3">
-          Próximas marés baixas ideais:
-        </p>
-        
-        {mockTides.slice(0, 3).map((tideDay) => {
-          const idealTide = tideDay.tides.find(t => t.type === 'low' && t.quality === 'ideal') || 
-                           tideDay.tides.find(t => t.type === 'low');
-          
-          if (!idealTide) return null;
-          
-          const date = new Date(tideDay.date);
-          const dayName = date.toLocaleDateString('pt-BR', { weekday: 'short' });
-          const dayNum = date.getDate();
-          const month = date.getMonth() + 1;
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          <span className="ml-3 text-muted-foreground">Calculando marés...</span>
+        </div>
+      )}
 
-          return (
-            <div
-              key={tideDay.date}
-              className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <Calendar className="w-4 h-4 text-primary" />
-                <div>
-                  <p className="font-medium text-sm capitalize">
-                    {dayName} {dayNum}/{month}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    às {idealTide.time} ({idealTide.height}m)
-                  </p>
+      {/* Error State */}
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Erro ao calcular marés. Usando dados de exemplo.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Tide Data */}
+      {idealTides && idealTides.length > 0 && (
+        <>
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-foreground mb-3">
+              Próximas marés baixas ideais:
+            </p>
+
+            {idealTides.map((tide) => {
+              const date = new Date(tide.date);
+              const dayName = date.toLocaleDateString('pt-BR', { weekday: 'short' });
+              const dayNum = date.getDate();
+              const month = date.getMonth() + 1;
+
+              return (
+                <div
+                  key={tide.date}
+                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Calendar className="w-4 h-4 text-primary" />
+                    <div>
+                      <p className="font-medium text-sm capitalize">
+                        {dayName} {dayNum}/{month}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        às {tide.time} ({tide.height}m)
+                      </p>
+                    </div>
+                  </div>
+                  {getQualityBadge(tide.quality)}
                 </div>
+              );
+            })}
+          </div>
+
+          {/* Calculation Info */}
+          {!isLoading && !error && (
+            <div className="mt-6 pt-4 border-t border-border">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2 h-2 bg-primary rounded-full"></span>
+                <p className="text-xs text-muted-foreground">
+                  Cálculo baseado em ciclos astronômicos
+                </p>
               </div>
-              {getQualityBadge(idealTide.quality)}
+              <p className="text-xs text-muted-foreground">
+                Para dados oficiais, consulte a{' '}
+                <a
+                  href="https://www.marinha.mil.br/chm/tabuas-de-mare"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  Marinha do Brasil
+                </a>
+              </p>
             </div>
-          );
-        })}
-      </div>
+          )}
+        </>
+      )}
+
+      {/* No ideal tides found */}
+      {idealTides && idealTides.length === 0 && !isLoading && (
+        <div className="text-center py-6">
+          <Waves className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">
+            Nenhuma maré ideal encontrada nos próximos dias
+          </p>
+        </div>
+      )}
 
       <div className="mt-6 pt-4 border-t border-border">
         <button className="text-sm text-primary hover:underline font-medium">
