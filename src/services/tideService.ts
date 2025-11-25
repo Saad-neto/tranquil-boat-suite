@@ -163,7 +163,15 @@ export const fetchIdealTides = async (days: number = 30): Promise<TideData[]> =>
 };
 
 /**
- * Busca próximas N marés baixas ideais
+ * Converte hora HH:MM para decimal
+ */
+const timeToDecimal = (time: string): number => {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours + minutes / 60;
+};
+
+/**
+ * Busca próximas N marés baixas ideais entre 9h e 15h
  */
 export const fetchNextIdealTides = async (count: number = 5): Promise<Array<{
   date: string;
@@ -175,9 +183,17 @@ export const fetchNextIdealTides = async (count: number = 5): Promise<Array<{
   const result = [];
 
   for (const day of idealTides) {
-    const bestTide = day.tides
-      .filter(t => t.type === 'low')
-      .sort((a, b) => a.height - b.height)[0];
+    // Filtra marés baixas entre 9h e 15h
+    const validTides = day.tides
+      .filter(t => {
+        if (t.type !== 'low') return false;
+        const timeDecimal = timeToDecimal(t.time);
+        return timeDecimal >= 9 && timeDecimal <= 15;
+      })
+      .sort((a, b) => a.height - b.height); // Ordena pela mais baixa
+
+    // Pega a primeira maré mais baixa no horário válido
+    const bestTide = validTides[0];
 
     if (bestTide && (bestTide.quality === 'ideal' || bestTide.quality === 'good')) {
       result.push({

@@ -121,9 +121,14 @@ const TideWidget = () => {
       )}
 
       <div className="mt-6 pt-4 border-t border-border">
-        <button className="text-sm text-primary hover:underline font-medium">
+        <a
+          href="https://www.marinha.mil.br/chm/tabuas-de-mare"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm text-primary hover:underline font-medium inline-block"
+        >
           Ver calendário completo →
-        </button>
+        </a>
       </div>
     </div>
   );
