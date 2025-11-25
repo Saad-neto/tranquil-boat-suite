@@ -17,7 +17,7 @@ const Hero = () => {
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: 'url(https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=1920&q=80)',
+          backgroundImage: 'url(/areia-vermelha-photo.jpg)',
           backgroundAttachment: 'fixed',
         }}
       >
