@@ -26,7 +26,7 @@ export const tours: Tour[] = [
     description: 'Navegue pelas águas tranquilas do Rio Paraíba descobrindo a beleza natural da região. Termine com o famoso pôr do sol da Praia do Jacaré ao som do saxofone de Jurandy, que há mais de 20 anos toca Bolero de Ravel em um espetáculo único no mundo! Experiência inesquecível!',
     duration: 240, // 4 horas
     price: 1699,
-    image: 'https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?w=1920&q=80',
+    image: '/pordosoljurady.jpeg',
     includes: [
       'Capitão experiente certificado',
       'Combustível',
