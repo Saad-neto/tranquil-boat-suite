@@ -1,12 +1,13 @@
 import { TideData } from '@/types';
+import { realTides2025, getIdealTidesFromRealData, getRealTideForDate, getTideQuality } from '@/data/realTides2025';
 
 /**
- * Serviço de Tábua de Marés para João Pessoa/PB
+ * Serviço de Tábua de Marés para João Pessoa/PB (Porto de Cabedelo)
  *
- * NOTA: Este serviço usa cálculos aproximados baseados em dados astronômicos.
- * Para dados oficiais precisos, recomenda-se consultar:
- * - https://www.marinha.mil.br/chm/tabuas-de-mare
- * - API paga: https://www.worldtides.info/ ou https://stormglass.io/
+ * ATUALIZADO: Agora usa dados REAIS extraídos do Apolo11 (Nov/Dez 2025)
+ * Fallback: Cálculos astronômicos aproximados quando dados reais não disponíveis
+ *
+ * Fonte oficial: https://www.marinha.mil.br/chm/tabuas-de-mare
  */
 
 const JOAO_PESSOA_LAT = -7.1195;
@@ -172,6 +173,7 @@ const timeToDecimal = (time: string): number => {
 
 /**
  * Busca próximas N marés baixas ideais entre 9h e 15h
+ * ATUALIZADO: Usa dados REAIS quando disponíveis!
  */
 export const fetchNextIdealTides = async (count: number = 5): Promise<Array<{
   date: string;
@@ -179,35 +181,51 @@ export const fetchNextIdealTides = async (count: number = 5): Promise<Array<{
   height: number;
   quality: string;
 }>> => {
-  const idealTides = await fetchIdealTides();
-  const result = [];
+  try {
+    // PRIORIDADE 1: Usar dados REAIS de 2025
+    console.log('🌊 Buscando marés REAIS de Cabedelo...');
+    const realIdealTides = getIdealTidesFromRealData(count);
 
-  for (const day of idealTides) {
-    // Filtra marés baixas entre 9h e 15h
-    const validTides = day.tides
-      .filter(t => {
-        if (t.type !== 'low') return false;
-        const timeDecimal = timeToDecimal(t.time);
-        return timeDecimal >= 9 && timeDecimal <= 15;
-      })
-      .sort((a, b) => a.height - b.height); // Ordena pela mais baixa
-
-    // Pega a primeira maré mais baixa no horário válido
-    const bestTide = validTides[0];
-
-    if (bestTide && (bestTide.quality === 'ideal' || bestTide.quality === 'good')) {
-      result.push({
-        date: day.date,
-        time: bestTide.time,
-        height: bestTide.height,
-        quality: bestTide.quality
-      });
+    if (realIdealTides && realIdealTides.length > 0) {
+      console.log(`✅ ${realIdealTides.length} marés REAIS encontradas!`);
+      return realIdealTides;
     }
 
-    if (result.length >= count) break;
-  }
+    // FALLBACK: Se não tiver dados reais, usa cálculos
+    console.log('⚠️ Dados reais não disponíveis, usando cálculos...');
+    const idealTides = await fetchIdealTides();
+    const result = [];
 
-  return result;
+    for (const day of idealTides) {
+      // Filtra marés baixas entre 9h e 15h
+      const validTides = day.tides
+        .filter(t => {
+          if (t.type !== 'low') return false;
+          const timeDecimal = timeToDecimal(t.time);
+          return timeDecimal >= 9 && timeDecimal <= 15;
+        })
+        .sort((a, b) => a.height - b.height); // Ordena pela mais baixa
+
+      // Pega a primeira maré mais baixa no horário válido
+      const bestTide = validTides[0];
+
+      if (bestTide && (bestTide.quality === 'ideal' || bestTide.quality === 'good')) {
+        result.push({
+          date: day.date,
+          time: bestTide.time,
+          height: bestTide.height,
+          quality: bestTide.quality
+        });
+      }
+
+      if (result.length >= count) break;
+    }
+
+    return result;
+  } catch (error) {
+    console.error('❌ Erro ao buscar marés:', error);
+    return [];
+  }
 };
 
 /**

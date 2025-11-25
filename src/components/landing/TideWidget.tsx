@@ -89,13 +89,14 @@ const TideWidget = () => {
           {!isLoading && !error && (
             <div className="mt-6 pt-4 border-t border-border">
               <div className="flex items-center gap-2 mb-2">
-                <span className="w-2 h-2 bg-primary rounded-full"></span>
-                <p className="text-xs text-muted-foreground">
-                  Cálculo baseado em ciclos astronômicos
+                <span className="w-2 h-2 bg-success rounded-full animate-pulse"></span>
+                <p className="text-xs font-medium text-success">
+                  Dados REAIS de Cabedelo/PB - Nov/Dez 2025
                 </p>
               </div>
               <p className="text-xs text-muted-foreground">
-                Para dados oficiais, consulte a{' '}
+                Fonte: Apolo11 (cálculos astronômicos oficiais).{' '}
+                Confirme com a{' '}
                 <a
                   href="https://www.marinha.mil.br/chm/tabuas-de-mare"
                   target="_blank"
