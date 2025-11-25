@@ -22,7 +22,7 @@ const Hero = () => {
         }}
       >
         {/* Dark Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[hsl(var(--hero-overlay))]/70 via-[hsl(var(--hero-overlay))]/60 to-[hsl(var(--hero-overlay))]/80"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-[hsl(var(--hero-overlay))]/30 via-[hsl(var(--hero-overlay))]/20 to-[hsl(var(--hero-overlay))]/40"></div>
       </div>
 
       {/* Content */}
