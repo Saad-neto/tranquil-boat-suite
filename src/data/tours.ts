@@ -8,7 +8,7 @@ export const tours: Tour[] = [
     description: 'Visite o famoso banco de areia com formação geológica única e tonalidade avermelhada que emerge na maré baixa, criando uma "ilha" no meio do mar com águas cristalinas e piscinas naturais. Termine o dia contemplando o espetacular pôr do sol paraibano.',
     duration: 360, // 6 horas
     price: 1699,
-    image: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=1920&q=80',
+    image: '/areia03.jpg',
     includes: [
       'Capitão experiente certificado',
       'Combustível',
