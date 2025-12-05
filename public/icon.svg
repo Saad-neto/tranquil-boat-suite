@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="256" fill="#0EA5E9"/>
+
+  <!-- Waves -->
+  <path d="M 50 350 Q 100 330 150 350 T 250 350 T 350 350 T 450 350"
+        stroke="#ffffff" stroke-width="20" fill="none" opacity="0.4"/>
+  <path d="M 50 380 Q 100 360 150 380 T 250 380 T 350 380 T 450 380"
+        stroke="#ffffff" stroke-width="20" fill="none" opacity="0.3"/>
+
+  <!-- Boat hull -->
+  <path d="M 180 260 L 150 300 Q 180 320 256 320 Q 332 320 362 300 L 332 260 Z"
+        fill="#ffffff"/>
+
+  <!-- Boat cabin -->
+  <rect x="230" y="200" width="52" height="60" rx="5" fill="#ffffff"/>
+
+  <!-- Boat windshield -->
+  <rect x="240" y="210" width="32" height="30" rx="3" fill="#0EA5E9" opacity="0.6"/>
+
+  <!-- Anchor on boat -->
+  <g transform="translate(256, 140)">
+    <path d="M 0 -25 L 0 25 M -15 10 L 0 25 L 15 10 M -8 -20 A 8 8 0 1 1 8 -20"
+          stroke="#ffffff" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
