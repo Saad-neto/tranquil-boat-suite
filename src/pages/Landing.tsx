@@ -7,8 +7,6 @@ import FAQ from '@/components/landing/FAQ';
 import InstagramGallery from '@/components/landing/InstagramGallery';
 import LocationMap from '@/components/landing/LocationMap';
 import Footer from '@/components/landing/Footer';
-import WhatsAppButton from '@/components/landing/WhatsAppButton';
-import FloatingCTA from '@/components/landing/FloatingCTA';
 
 const Landing = () => {
   return (
@@ -22,8 +20,6 @@ const Landing = () => {
       <LocationMap />
       <FAQ />
       <Footer />
-      <WhatsAppButton />
-      <FloatingCTA />
     </div>
   );
 };
