@@ -1,37 +1,46 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Waves } from 'lucide-react';
+import { Anchor } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login, isAuthenticated } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // Simular autenticação
-    setTimeout(() => {
-      if (email === 'admin@tranquilidadeboat.com.br' && password === 'admin123') {
-        localStorage.setItem('auth_token', 'mock_token_123');
-        if (rememberMe) {
-          localStorage.setItem('remember_me', 'true');
-        }
+    try {
+      const success = await login(email, password);
+
+      if (success) {
         toast.success('Login realizado com sucesso!');
         navigate('/dashboard');
       } else {
         toast.error('Email ou senha incorretos');
       }
+    } catch (error) {
+      toast.error('Erro ao fazer login. Tente novamente.');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -41,7 +50,7 @@ const Login = () => {
           {/* Logo */}
           <div className="text-center space-y-4">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-primary to-secondary">
-              <Waves className="w-8 h-8 text-white" />
+              <Anchor className="w-8 h-8 text-white" />
             </div>
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">

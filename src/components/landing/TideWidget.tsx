@@ -1,136 +1,188 @@
-import { useNextIdealTides } from '@/hooks/useTides';
-import { Waves, Calendar, Loader2, AlertCircle } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Waves, Sunrise, Sunset, ArrowUp, ArrowDown, Calendar } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import {
+  getTideForDate,
+  getTideQuality,
+  getBestTideForDate,
+  getLunarPhaseLabel,
+  getLunarPhaseEmoji,
+} from '@/data/tideData2026';
 
 const TideWidget = () => {
-  const { data: idealTides, isLoading, error } = useNextIdealTides(3);
+  const today = new Date().toISOString().split('T')[0];
+  const [selectedDate, setSelectedDate] = useState(today);
+
+  const selectedTideData = useMemo(() => {
+    return getTideForDate(selectedDate);
+  }, [selectedDate]);
+
+  const bestTide = useMemo(() => {
+    return getBestTideForDate(selectedDate);
+  }, [selectedDate]);
 
   const getQualityBadge = (quality: string) => {
     switch (quality) {
       case 'ideal':
-        return <Badge className="bg-success text-success-foreground">⭐ Ideal</Badge>;
+        return <Badge className="bg-success text-success-foreground text-xs">Ideal</Badge>;
       case 'good':
-        return <Badge className="bg-info text-info-foreground">✅ Boa</Badge>;
+        return <Badge className="bg-info text-info-foreground text-xs">Boa</Badge>;
       case 'regular':
-        return <Badge className="bg-warning text-warning-foreground">⚠️ Regular</Badge>;
+        return <Badge className="bg-warning text-warning-foreground text-xs">Regular</Badge>;
       default:
-        return <Badge variant="destructive">❌ Não Recomendado</Badge>;
+        return <Badge variant="destructive" className="text-xs">Ruim</Badge>;
     }
   };
 
+  const formatDateHeader = (dateStr: string) => {
+    const date = new Date(dateStr + 'T12:00:00');
+    return date.toLocaleDateString('pt-BR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
+  };
+
+  const goToToday = () => {
+    setSelectedDate(today);
+  };
+
+  const isToday = selectedDate === today;
+
   return (
-    <div className="bg-card rounded-2xl p-6 shadow-lg border border-border hover:shadow-xl transition-shadow">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-          <Waves className="w-6 h-6 text-primary" />
+    <div className="bg-card rounded-2xl p-4 sm:p-6 shadow-lg border border-border">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center">
+          <Waves className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
         </div>
         <div>
-          <h3 className="text-xl font-bold text-card-foreground">Tábua de Marés</h3>
-          <p className="text-sm text-muted-foreground">João Pessoa</p>
+          <h3 className="text-lg sm:text-xl font-bold text-card-foreground">Tábua de Marés</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground">Porto de Cabedelo</p>
         </div>
       </div>
 
-      {/* Loading State */}
-      {isLoading && (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-8 h-8 text-primary animate-spin" />
-          <span className="ml-3 text-muted-foreground">Calculando marés...</span>
+      {/* Date Picker */}
+      <div className="mb-4 flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1">
+          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            min="2025-01-01"
+            max="2026-12-31"
+            className="w-full pl-10 pr-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
+          />
         </div>
-      )}
+        {!isToday && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToToday}
+            className="text-xs"
+          >
+            Hoje
+          </Button>
+        )}
+      </div>
 
-      {/* Error State */}
-      {error && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Erro ao calcular marés. Usando dados de exemplo.
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* Selected Date Details */}
+      {selectedTideData ? (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="font-semibold text-sm capitalize">
+              {formatDateHeader(selectedDate)}
+            </h4>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <span>{getLunarPhaseEmoji(selectedTideData.lunarPhase)}</span>
+              <span className="hidden sm:inline">{getLunarPhaseLabel(selectedTideData.lunarPhase)}</span>
+            </div>
+          </div>
 
-      {/* Tide Data */}
-      {idealTides && idealTides.length > 0 && (
-        <>
-          <div className="space-y-3">
-            <p className="text-sm font-semibold text-foreground mb-3">
-              Próximas marés baixas ideais:
-            </p>
+          {/* Sun times */}
+          <div className="flex items-center gap-4 mb-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Sunrise className="w-3 h-3" />
+              <span>{selectedTideData.sunrise}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Sunset className="w-3 h-3" />
+              <span>{selectedTideData.sunset}</span>
+            </div>
+          </div>
 
-            {idealTides.map((tide) => {
-              const date = new Date(tide.date);
-              const dayName = date.toLocaleDateString('pt-BR', { weekday: 'short' });
-              const dayNum = date.getDate();
-              const month = date.getMonth() + 1;
+          {/* Tide times */}
+          <div className="space-y-2">
+            {selectedTideData.tides.map((tide, index) => {
+              const quality = tide.type === 'low' ? getTideQuality(tide.height) : null;
+              const hour = parseInt(tide.time.split(':')[0]);
+              const isGoodTime = tide.type === 'low' && hour >= 9 && hour <= 16;
 
               return (
                 <div
-                  key={tide.date}
-                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+                  key={index}
+                  className={`
+                    flex items-center justify-between p-2 sm:p-3 rounded-lg
+                    ${isGoodTime && (quality === 'ideal' || quality === 'good')
+                      ? 'bg-success/10 border border-success/20'
+                      : 'bg-muted/50'
+                    }
+                  `}
                 >
-                  <div className="flex items-center gap-3">
-                    <Calendar className="w-4 h-4 text-primary" />
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className={`
+                      w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center
+                      ${tide.type === 'high' ? 'bg-primary/20 text-primary' : 'bg-secondary/20 text-secondary'}
+                    `}>
+                      {tide.type === 'high' ? (
+                        <ArrowUp className="w-3 h-3 sm:w-4 sm:h-4" />
+                      ) : (
+                        <ArrowDown className="w-3 h-3 sm:w-4 sm:h-4" />
+                      )}
+                    </div>
                     <div>
-                      <p className="font-medium text-sm capitalize">
-                        {dayName} {dayNum}/{month}
+                      <p className="font-medium text-xs sm:text-sm">
+                        {tide.type === 'high' ? 'Maré Alta' : 'Maré Baixa'}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        às {tide.time} ({tide.height}m)
+                        às {tide.time}
                       </p>
                     </div>
                   </div>
-                  {getQualityBadge(tide.quality)}
+                  <div className="text-right">
+                    <p className="font-bold text-sm sm:text-base">{tide.height}m</p>
+                    {quality && isGoodTime && getQualityBadge(quality)}
+                  </div>
                 </div>
               );
             })}
           </div>
 
-          {/* Calculation Info */}
-          {!isLoading && !error && (
-            <div className="mt-6 pt-4 border-t border-border">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="w-2 h-2 bg-success rounded-full animate-pulse"></span>
-                <p className="text-xs font-medium text-success">
-                  Dados REAIS de Cabedelo/PB - Nov/Dez 2025
-                </p>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Fonte: Apolo11 (cálculos astronômicos oficiais).{' '}
-                Confirme com a{' '}
-                <a
-                  href="https://www.marinha.mil.br/chm/tabuas-de-mare"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  Marinha do Brasil
-                </a>
+          {/* Best tide recommendation */}
+          {bestTide && (bestTide.quality === 'ideal' || bestTide.quality === 'good') && (
+            <div className="mt-4 p-3 bg-success/10 rounded-lg border border-success/20">
+              <p className="text-xs sm:text-sm font-medium text-success">
+                Melhor horário para Areia Vermelha: {bestTide.time} ({bestTide.height}m)
               </p>
             </div>
           )}
-        </>
-      )}
 
-      {/* No ideal tides found */}
-      {idealTides && idealTides.length === 0 && !isLoading && (
-        <div className="text-center py-6">
-          <Waves className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">
-            Nenhuma maré ideal encontrada nos próximos dias
-          </p>
+          {bestTide && bestTide.quality === 'regular' && (
+            <div className="mt-4 p-3 bg-warning/10 rounded-lg border border-warning/20">
+              <p className="text-xs sm:text-sm font-medium text-warning">
+                Maré regular às {bestTide.time} - passeio possível com restrições
+              </p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="text-center py-6 text-muted-foreground">
+          <p className="text-sm">Dados não disponíveis para esta data.</p>
+          <p className="text-xs mt-1">Selecione uma data entre 01/01/2025 e 31/12/2026</p>
         </div>
       )}
-
-      <div className="mt-6 pt-4 border-t border-border">
-        <a
-          href="https://www.marinha.mil.br/chm/tabuas-de-mare"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-primary hover:underline font-medium inline-block"
-        >
-          Ver calendário completo →
-        </a>
-      </div>
     </div>
   );
 };

@@ -56,15 +56,30 @@ export interface Tour {
   name: string;
   slug: string;
   description: string;
-  duration: number; // em minutos
+  duration: number | null; // em minutos (null = flexível)
   price: number;
+  maxPeople?: number;
   image: string;
   includes: string[];
+  highlights?: string[];
   requiresLowTide: boolean;
   hasLiveMusic: boolean;
   departureTime?: string;
   bestFor: string[];
   isActive: boolean;
+}
+
+// Addon Types
+export interface ChurrascoItem {
+  name: string;
+  value: number;
+}
+
+export interface PacoteChurrasco {
+  id: string;
+  name: string;
+  price: number;
+  items: ChurrascoItem[];
 }
 
 // Boat Types

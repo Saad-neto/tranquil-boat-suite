@@ -88,27 +88,9 @@ const WeatherWidget = () => {
             </div>
           </div>
 
-          <div className="mt-4">
-            {getRecommendationBadge(forecast[0].recommendation)}
-          </div>
-
-          {/* API Status Indicator */}
-          {!isLoading && !error && (
-            <div className="mt-4 pt-4 border-t border-border">
-              <p className="text-xs text-muted-foreground flex items-center gap-2">
-                <span className="w-2 h-2 bg-success rounded-full animate-pulse"></span>
-                Dados em tempo real via OpenWeather
-              </p>
-            </div>
-          )}
         </>
       )}
 
-      <div className="mt-6 pt-4 border-t border-border">
-        <button className="text-sm text-primary hover:underline font-medium">
-          Ver previsão detalhada →
-        </button>
-      </div>
     </div>
   );
 };

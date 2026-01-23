@@ -22,33 +22,6 @@ const BookingSection = () => {
           <BookingForm />
         </div>
 
-        {/* Additional Info */}
-        <div className="mt-12 grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          <div className="text-center p-6 bg-card rounded-lg animate-fade-up" style={{ animationDelay: '0.2s' }}>
-            <div className="text-3xl mb-3">⚡</div>
-            <h3 className="font-semibold mb-2">Resposta Rápida</h3>
-            <p className="text-sm text-muted-foreground">
-              Retornamos em até 2 horas pelo WhatsApp
-            </p>
-          </div>
-
-          <div className="text-center p-6 bg-card rounded-lg animate-fade-up" style={{ animationDelay: '0.3s' }}>
-            <div className="text-3xl mb-3">🔒</div>
-            <h3 className="font-semibold mb-2">Reserva Segura</h3>
-            <p className="text-sm text-muted-foreground">
-              Seus dados são protegidos e não compartilhados
-            </p>
-          </div>
-
-          <div className="text-center p-6 bg-card rounded-lg animate-fade-up" style={{ animationDelay: '0.4s' }}>
-            <div className="text-3xl mb-3">📱</div>
-            <h3 className="font-semibold mb-2">Atendimento Direto</h3>
-            <p className="text-sm text-muted-foreground">
-              Fale conosco via WhatsApp instantaneamente
-            </p>
-          </div>
-        </div>
-
         {/* WhatsApp Direct Contact */}
         <div className="mt-12 text-center">
           <p className="text-muted-foreground mb-4">

@@ -3,12 +3,9 @@ import Hero from '@/components/landing/Hero';
 import ToursSection from '@/components/landing/ToursSection';
 import WidgetsSection from '@/components/landing/WidgetsSection';
 import BookingSection from '@/components/landing/BookingSection';
-import HowItWorks from '@/components/landing/HowItWorks';
-import AboutUs from '@/components/landing/AboutUs';
-import Gallery from '@/components/landing/Gallery';
-import WhyUs from '@/components/landing/WhyUs';
-import Testimonials from '@/components/landing/Testimonials';
 import FAQ from '@/components/landing/FAQ';
+import InstagramGallery from '@/components/landing/InstagramGallery';
+import LocationMap from '@/components/landing/LocationMap';
 import Footer from '@/components/landing/Footer';
 import WhatsAppButton from '@/components/landing/WhatsAppButton';
 import FloatingCTA from '@/components/landing/FloatingCTA';
@@ -19,13 +16,10 @@ const Landing = () => {
       <Header />
       <Hero />
       <ToursSection />
-      <WidgetsSection />
       <BookingSection />
-      <HowItWorks />
-      <AboutUs />
-      <Gallery />
-      <WhyUs />
-      <Testimonials />
+      <WidgetsSection />
+      <InstagramGallery />
+      <LocationMap />
       <FAQ />
       <Footer />
       <WhatsAppButton />

@@ -8,27 +8,23 @@ const ToursSection = () => {
         {/* Section Header */}
         <div className="text-center mb-16 animate-fade-up">
           <div className="inline-block mb-4">
-            <span className="text-4xl">🌊</span>
+            <span className="text-4xl">🚤</span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-            Nossos Passeios
+            Nosso Passeio
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Experiências únicas e inesquecíveis em João Pessoa
+            A experiência completa de João Pessoa em um único dia inesquecível
           </p>
         </div>
 
-        {/* Tours Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {tours.map((tour, index) => (
-            <div
-              key={tour.id}
-              className="animate-fade-up"
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <TourCard tour={tour} />
-            </div>
-          ))}
+        {/* Single Tour Card - Centered */}
+        <div className="flex justify-center">
+          <div className="max-w-xl w-full animate-fade-up">
+            {tours.filter(tour => tour.isActive).map((tour) => (
+              <TourCard key={tour.id} tour={tour} />
+            ))}
+          </div>
         </div>
       </div>
     </section>

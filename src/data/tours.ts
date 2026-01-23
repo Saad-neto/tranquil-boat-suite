@@ -1,41 +1,50 @@
-import { Tour } from '@/types';
+import { Tour, PacoteChurrasco } from '@/types';
 
 export const tours: Tour[] = [
   {
     id: '1',
-    name: 'Areia Vermelha + Pôr do Sol',
-    slug: 'areia-vermelha-por-do-sol',
-    description: 'Visite o famoso banco de areia com formação geológica única e tonalidade avermelhada que emerge na maré baixa, criando uma "ilha" no meio do mar com águas cristalinas e piscinas naturais. Termine o dia contemplando o espetacular pôr do sol paraibano.',
-    duration: 360, // 6 horas
-    price: 1699,
+    name: 'Areia Vermelha + Pôr do Sol do Jacaré',
+    slug: 'areia-vermelha-por-do-sol-jacare',
+    description: 'Embarque no Jacaré e navegue até a famosa Areia Vermelha, uma ilha de areia avermelhada que surge do mar na maré baixa. Nade em águas cristalinas, com possibilidade de avistar golfinhos. Finalize o dia assistindo ao espetacular pôr do sol ao som do saxofone de Jurandir, tradição única no mundo.',
+    duration: null, // Flexível - depende da maré
+    price: 2199, // Valor único do barco (até 7 pessoas)
+    maxPeople: 7,
     image: '/areia03.jpg',
     includes: [
-      'Capitão experiente certificado',
+      'Capitão experiente certificado pela Marinha',
       'Combustível',
-      'Colete salva-vidas'
+      'Coletes salva-vidas',
+      'Caixa de som JBL',
+      'Cooler com gelo',
+      'Possibilidade de avistar golfinhos'
     ],
+    highlights: [
+      'Saída do Jacaré',
+      'Parada na Areia Vermelha',
+      'Pôr do sol ao som de Jurandir do Sax'
+    ],
+    departureTime: 'Flexível (combinado conforme maré)',
     requiresLowTide: true,
-    hasLiveMusic: false,
-    bestFor: ['Famílias', 'Grupos', 'Casais', 'Fotos'],
-    isActive: true
-  },
-  {
-    id: '2',
-    name: 'Rio Paraíba + Pôr do Sol',
-    slug: 'rio-paraiba-por-do-sol',
-    description: 'Navegue pelas águas tranquilas do Rio Paraíba descobrindo a beleza natural da região. Termine com o famoso pôr do sol da Praia do Jacaré ao som do saxofone de Jurandy, que há mais de 20 anos toca Bolero de Ravel em um espetáculo único no mundo! Experiência inesquecível!',
-    duration: 240, // 4 horas
-    price: 1699,
-    image: '/pordosoljurady.jpeg',
-    includes: [
-      'Capitão experiente certificado',
-      'Combustível',
-      'Colete salva-vidas'
-    ],
-    requiresLowTide: false,
     hasLiveMusic: true,
-    departureTime: '15:00',
-    bestFor: ['Casais', 'Romântico', 'Contemplação', 'Experiência Cultural'],
+    bestFor: ['Famílias', 'Grupos', 'Casais', 'Fotos', 'Experiência Completa'],
     isActive: true
   }
 ];
+
+// Kit Tranquilidade Opcional
+export const kitTranquilidade: PacoteChurrasco = {
+  id: 'kit-tranquilidade',
+  name: 'Kit Tranquilidade',
+  price: 300,
+  items: [
+    { name: 'Churrasco Completo', value: 120 },
+    { name: '12 Cervejas', value: 60 },
+    { name: 'Refrigerantes', value: 20 },
+    { name: 'Águas', value: 10 },
+    { name: 'Petiscos', value: 40 },
+    { name: 'Gelo e Carvão', value: 50 }
+  ]
+};
+
+// Alias para compatibilidade
+export const pacoteChurrasco = kitTranquilidade;
