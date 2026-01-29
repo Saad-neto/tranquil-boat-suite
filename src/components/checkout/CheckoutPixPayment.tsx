@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Copy, Check, Loader2 } from 'lucide-react';
+import { Copy, Check, Loader2, Clock, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   createPixPayment,
@@ -13,7 +13,9 @@ import {
   validateCPFCNPJ,
   PixQrCode,
   Payment,
+  getPaymentsByBooking,
 } from '@/services/paymentService';
+import { trackPurchase } from '@/lib/analytics';
 
 interface CheckoutPixPaymentProps {
   bookingId: string;
@@ -34,23 +36,114 @@ export function CheckoutPixPayment({
   totalAmount,
   onPaymentCreated,
 }: CheckoutPixPaymentProps) {
-  const [step, setStep] = useState<'form' | 'qrcode'>('form');
+  const [step, setStep] = useState<'form' | 'qrcode' | 'expired'>('form');
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [cpfCnpj, setCpfCnpj] = useState('');
   const [qrCode, setQrCode] = useState<PixQrCode | null>(null);
   const [payment, setPayment] = useState<Payment | null>(null);
+  const [timeRemaining, setTimeRemaining] = useState(600); // 10 minutos = 600 segundos
+  const [showLowTimeWarning, setShowLowTimeWarning] = useState(false);
+
+  // Contador regressivo
+  useEffect(() => {
+    if (step !== 'qrcode') return;
+
+    const interval = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setStep('expired');
+          toast.error('Tempo expirado! Faça uma nova reserva.');
+          return 0;
+        }
+
+        // Alerta quando faltar 2 minutos
+        if (prev === 120 && !showLowTimeWarning) {
+          setShowLowTimeWarning(true);
+          toast.warning('⚠️ Restam apenas 2 minutos para concluir o pagamento!', {
+            duration: 5000,
+          });
+        }
+
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [step, showLowTimeWarning]);
+
+  // 🎯 NOVO: Polling para detectar confirmação de pagamento PIX
+  useEffect(() => {
+    if (step !== 'qrcode' || !payment?.id) return;
+
+    let pollCount = 0;
+    const MAX_POLLS = 120; // 10 minutos (120 * 5s)
+    const POLL_INTERVAL = 5000; // 5 segundos
+    let hasTrackedPurchase = false; // Flag anti-duplicação
+
+    const pollInterval = setInterval(async () => {
+      pollCount++;
+
+      try {
+        // Consultar status do pagamento
+        const response = await getPaymentsByBooking(bookingId);
+        const currentPayment = response.data.find(p => p.id === payment.id);
+
+        if (!currentPayment) return;
+
+        // Verificar se foi confirmado
+        const isConfirmed = ['RECEIVED', 'CONFIRMED'].includes(currentPayment.status);
+
+        if (isConfirmed && !hasTrackedPurchase) {
+          hasTrackedPurchase = true; // Previne duplicação
+          clearInterval(pollInterval);
+
+          // 🎯 Rastrear Conversão no GA4/Google Ads
+          trackPurchase(
+            'Passeio Náutico',
+            currentPayment.amount,
+            bookingNumber
+          );
+
+          // Notificar componente pai
+          onPaymentCreated(currentPayment);
+
+          toast.success('Pagamento PIX confirmado!');
+        }
+
+        // Timeout após 10 minutos
+        if (pollCount >= MAX_POLLS) {
+          clearInterval(pollInterval);
+          console.log('Polling timeout - pagamento ainda pendente');
+        }
+      } catch (error) {
+        console.error('Erro ao verificar pagamento:', error);
+        // Não para polling em caso de erro transitório
+      }
+    }, POLL_INTERVAL);
+
+    return () => clearInterval(pollInterval);
+  }, [step, payment, bookingId, bookingNumber, onPaymentCreated]);
+
+  // Formatar tempo restante (mm:ss)
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const handleCpfCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '');
-    if (value.length <= 14) {
+    if (value.length <= 11) { // Only CPF (11 digits)
       setCpfCnpj(formatCPFCNPJ(value));
     }
   };
 
   const handleSubmit = async () => {
-    if (!validateCPFCNPJ(cpfCnpj)) {
-      toast.error('CPF/CNPJ inválido');
+    const cleanCpf = cpfCnpj.replace(/\D/g, '');
+    if (cleanCpf.length !== 11 || !validateCPFCNPJ(cpfCnpj)) {
+      toast.error('CPF inválido');
       return;
     }
 
@@ -71,12 +164,9 @@ export function CheckoutPixPayment({
       setStep('qrcode');
       toast.success('QR Code PIX gerado com sucesso!');
 
-      // Notify parent after short delay to show QR code first
-      setTimeout(() => {
-        if (response.data.payment) {
-          onPaymentCreated(response.data.payment);
-        }
-      }, 1000);
+      // NÃO chamar onPaymentCreated aqui!
+      // O pagamento ainda NÃO foi confirmado, apenas o QR Code foi gerado
+      // onPaymentCreated só deve ser chamado quando o webhook do Asaas confirmar o pagamento
     } catch (error) {
       console.error('Error creating PIX payment:', error);
       toast.error(error instanceof Error ? error.message : 'Erro ao gerar QR Code PIX');
@@ -98,7 +188,40 @@ export function CheckoutPixPayment({
     }
   };
 
+  // Tela de expiração
+  if (step === 'expired') {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="pt-6 text-center space-y-4">
+            <div className="flex justify-center">
+              <div className="p-4 bg-red-100 rounded-full">
+                <AlertTriangle className="w-12 h-12 text-red-600" />
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-red-600">Tempo Expirado</h2>
+            <p className="text-muted-foreground">
+              O QR Code PIX expirou após 10 minutos sem pagamento.
+            </p>
+            <p className="text-sm">
+              Por favor, faça uma nova reserva para gerar um novo QR Code.
+            </p>
+            <Button
+              onClick={() => window.location.reload()}
+              className="mt-4"
+            >
+              Nova Reserva
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (step === 'qrcode') {
+    const isLowTime = timeRemaining <= 120; // Menos de 2 minutos
+    const isCriticalTime = timeRemaining <= 60; // Menos de 1 minuto
+
     return (
       <div className="space-y-6">
         {/* Header */}
@@ -108,6 +231,29 @@ export function CheckoutPixPayment({
             Escaneie o QR Code ou copie o código para pagar
           </p>
         </div>
+
+        {/* Aviso de tempo restante */}
+        <Card className={`${isLowTime ? 'border-orange-500' : ''} ${isCriticalTime ? 'border-red-500 animate-pulse' : ''}`}>
+          <CardContent className="pt-4">
+            <div className={`flex items-center gap-3 p-4 rounded-lg ${
+              isCriticalTime ? 'bg-red-50 text-red-800' :
+              isLowTime ? 'bg-orange-50 text-orange-800' :
+              'bg-blue-50 text-blue-800'
+            }`}>
+              <Clock className={`w-5 h-5 ${isCriticalTime || isLowTime ? 'animate-pulse' : ''}`} />
+              <div className="flex-1">
+                <p className="font-semibold text-sm">
+                  {isCriticalTime ? '⚠️ ATENÇÃO: Menos de 1 minuto!' :
+                   isLowTime ? '⏰ Pouco tempo restante!' :
+                   'PIX válido por 10 minutos'}
+                </p>
+                <p className="text-xs mt-1">
+                  Tempo restante: <span className="font-bold text-lg">{formatTime(timeRemaining)}</span>
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardContent className="pt-6 space-y-6">
@@ -192,7 +338,7 @@ export function CheckoutPixPayment({
       <div>
         <h2 className="text-2xl md:text-3xl font-bold">Pagamento via PIX</h2>
         <p className="text-muted-foreground mt-2">
-          Informe seu CPF/CNPJ para gerar o QR Code
+          Informe seu CPF para gerar o QR Code
         </p>
       </div>
 
@@ -211,19 +357,19 @@ export function CheckoutPixPayment({
             </p>
           </div>
 
-          {/* CPF/CNPJ input */}
+          {/* CPF input */}
           <div className="space-y-2">
-            <Label htmlFor="cpfCnpj">CPF ou CNPJ do pagador *</Label>
+            <Label htmlFor="cpfCnpj">CPF do pagador *</Label>
             <Input
               id="cpfCnpj"
-              placeholder="000.000.000-00 ou 00.000.000/0000-00"
+              placeholder="000.000.000-00"
               value={cpfCnpj}
               onChange={handleCpfCnpjChange}
-              maxLength={18}
+              maxLength={14}
               className="text-lg"
             />
             <p className="text-xs text-muted-foreground">
-              Informe o CPF ou CNPJ de quem irá realizar o pagamento
+              Informe o CPF de quem irá realizar o pagamento
             </p>
           </div>
 

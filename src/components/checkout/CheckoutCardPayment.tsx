@@ -20,6 +20,7 @@ import {
   validateCPFCNPJ,
   Payment,
 } from '@/services/paymentService';
+import { trackPurchase } from '@/lib/analytics';
 
 interface CheckoutCardPaymentProps {
   bookingId: string;
@@ -84,7 +85,7 @@ export function CheckoutCardPayment({
     switch (field) {
       case 'cpfCnpj':
         processedValue = value.replace(/\D/g, '');
-        if (processedValue.length <= 14) {
+        if (processedValue.length <= 11) { // Only CPF (11 digits)
           processedValue = formatCPFCNPJ(processedValue);
         } else {
           return;
@@ -134,8 +135,9 @@ export function CheckoutCardPayment({
   };
 
   const validateForm = (): boolean => {
-    if (!validateCPFCNPJ(formData.cpfCnpj)) {
-      toast.error('CPF/CNPJ inválido');
+    const cleanCpf = formData.cpfCnpj.replace(/\D/g, '');
+    if (cleanCpf.length !== 11 || !validateCPFCNPJ(formData.cpfCnpj)) {
+      toast.error('CPF inválido');
       return false;
     }
     if (!formData.name || !formData.email || !formData.phone) {
@@ -182,7 +184,7 @@ export function CheckoutCardPayment({
         customerPhone: formData.phone.replace(/\D/g, ''),
         postalCode: formData.postalCode.replace(/\D/g, ''),
         addressNumber: formData.addressNumber,
-        amount: totalAmount,
+        amount: calculateTotalAmount(),
         description: `Reserva ${bookingNumber}`,
         installments: parseInt(formData.installments),
         creditCard: {
@@ -203,6 +205,14 @@ export function CheckoutCardPayment({
 
       if (response.data.success) {
         toast.success('Pagamento aprovado!');
+
+        // 🎯 NOVO: Rastrear Conversão no GA4/Google Ads
+        trackPurchase(
+          'Passeio Náutico',
+          response.data.payment.amount,
+          bookingNumber // transaction_id para deduplicação
+        );
+
         onPaymentCreated(response.data.payment, true);
       } else {
         toast.error('Pagamento recusado');
@@ -218,6 +228,18 @@ export function CheckoutCardPayment({
       toast.error('Erro ao processar pagamento');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Calculate total amount with interest based on installments
+  const calculateTotalAmount = () => {
+    const installments = parseInt(formData.installments);
+    if (installments === 1) {
+      // No interest for single payment
+      return totalAmount;
+    } else {
+      // 15% total interest for installments
+      return totalAmount * 1.15;
     }
   };
 
@@ -340,13 +362,37 @@ export function CheckoutCardPayment({
       <Card>
         <CardContent className="pt-6 space-y-6">
           {/* Amount info */}
-          <div className="p-4 bg-muted rounded-lg">
+          <div className="p-4 bg-muted rounded-lg space-y-2">
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Valor a pagar:</span>
-              <span className="text-2xl font-bold text-accent">
+              <span className="text-muted-foreground">Valor do passeio:</span>
+              <span className="font-semibold">
                 {formatCurrency(totalAmount)}
               </span>
             </div>
+            {parseInt(formData.installments) > 1 && (
+              <>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground">Taxa de parcelamento (15%):</span>
+                  <span className="text-orange-600 font-medium">
+                    + {formatCurrency(totalAmount * 0.15)}
+                  </span>
+                </div>
+                <div className="border-t border-border pt-2 flex justify-between items-center">
+                  <span className="font-semibold">Valor total a pagar:</span>
+                  <span className="text-2xl font-bold text-accent">
+                    {formatCurrency(calculateTotalAmount())}
+                  </span>
+                </div>
+              </>
+            )}
+            {parseInt(formData.installments) === 1 && (
+              <div className="flex justify-between items-center">
+                <span className="font-semibold">Valor total a pagar:</span>
+                <span className="text-2xl font-bold text-accent">
+                  {formatCurrency(totalAmount)}
+                </span>
+              </div>
+            )}
             <p className="text-xs text-muted-foreground mt-1">
               Reserva: {bookingNumber}
             </p>
@@ -357,13 +403,13 @@ export function CheckoutCardPayment({
             <h4 className="font-semibold">Dados do Cliente</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label htmlFor="cpfCnpj">CPF/CNPJ *</Label>
+                <Label htmlFor="cpfCnpj">CPF *</Label>
                 <Input
                   id="cpfCnpj"
                   placeholder="000.000.000-00"
                   value={formData.cpfCnpj}
                   onChange={(e) => handleChange('cpfCnpj', e.target.value)}
-                  maxLength={18}
+                  maxLength={14}
                 />
               </div>
               <div className="space-y-1">
@@ -387,7 +433,7 @@ export function CheckoutCardPayment({
                 <Label htmlFor="phone">Telefone *</Label>
                 <Input
                   id="phone"
-                  placeholder="(00) 00000-0000"
+                  placeholder="WhatsApp"
                   value={formData.phone}
                   onChange={(e) => handleChange('phone', e.target.value)}
                   maxLength={15}
@@ -516,7 +562,7 @@ export function CheckoutCardPayment({
                 Processando Pagamento...
               </>
             ) : (
-              `Pagar ${formatCurrency(totalAmount)}`
+              `Pagar ${formatCurrency(calculateTotalAmount())}`
             )}
           </Button>
 
